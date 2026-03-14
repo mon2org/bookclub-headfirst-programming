@@ -36,6 +36,7 @@ def main() -> None:
 
     repo_root = Path(__file__).resolve().parent.parent
     sessions_root = repo_root / "sessions"
+    sessions_root.mkdir(parents=True, exist_ok=True)
 
     session = args.session if args.session else next_session_number(sessions_root)
     print(f"対象セッション番号: {session}")

@@ -33,6 +33,8 @@ def branch_exists_remote(repo_root: Path, remote: str, branch: str) -> bool:
 
 def next_session_number(sessions_root: Path) -> str:
     """sessions 配下から次のセッション番号を算出する。"""
+    sessions_root.mkdir(parents=True, exist_ok=True)
+
     max_value = 0
     for child in sessions_root.iterdir():
         if child.is_dir() and re.fullmatch(r"\d+", child.name):
