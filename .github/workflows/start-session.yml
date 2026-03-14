@@ -1,0 +1,73 @@
+name: セッション開始
+
+on:
+  workflow_dispatch:
+    inputs:
+      session:
+        description: "セッション番号（任意。未指定なら自動で次番号を採番）"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  start-session:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: mise をセットアップ
+        uses: jdx/mise-action@v2
+
+      - name: mise 管理ツールをインストール
+        run: mise install
+
+      - name: セッション番号と存在有無を判定
+        id: resolve
+        run: |
+          set -euo pipefail
+
+          input="${{ github.event.inputs.session }}"
+          if [[ -n "$input" ]]; then
+            if [[ ! "$input" =~ ^[0-9]+$ ]]; then
+              echo "session は数字のみを指定すること。例: 001" >&2
+              exit 1
+            fi
+            session=$(printf "%03d" "$((10#$input))")
+          else
+            max=0
+            shopt -s nullglob
+            for dir in sessions/*; do
+              if [[ -d "$dir" ]]; then
+                name="$(basename "$dir")"
+                if [[ "$name" =~ ^[0-9]+$ ]]; then
+                  value=$((10#$name))
+                  if (( value > max )); then
+                    max=$value
+                  fi
+                fi
+              fi
+            done
+            session=$(printf "%03d" "$((max + 1))")
+          fi
+
+          echo "session=$session" >> "$GITHUB_OUTPUT"
+
+          if [[ -d "sessions/$session" ]]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 既存セッションならスキップ
+        if: steps.resolve.outputs.exists == 'true'
+        run: echo "sessions/${{ steps.resolve.outputs.session }} は既に存在するため作成をスキップする。"
+
+      - name: start-session タスクを実行
+        if: steps.resolve.outputs.exists != 'true'
+        run: mise run start-session -- --session "${{ steps.resolve.outputs.session }}"

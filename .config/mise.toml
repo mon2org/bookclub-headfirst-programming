@@ -1,0 +1,24 @@
+[tools]
+lefthook = "latest"
+python = "latest"
+uv = "latest"
+
+[tasks.create-session]
+description = "次のセッションのファイルを作成"
+run = "python scripts/create_session_files.py"
+
+[tasks.start-session]
+description = "セッション開始（ブランチ作成・push・ファイル作成）"
+run = "python scripts/start_session.py"
+
+[tasks.sync-fork]
+description = "upstream/main を fork/main に同期して push"
+run = "python scripts/sync_fork.py"
+
+[tasks.create-session-branch]
+description = "次のセッションブランチを作成して push"
+run = "python scripts/create_session_branch.py"
+
+[tasks.check-session-conflicts]
+description = "upstream/main とのマージコンフリクトを検出"
+run = "python scripts/detect_conflicts_notify.py"
